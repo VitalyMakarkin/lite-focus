@@ -15,11 +15,13 @@ import kotlinx.coroutines.launch
 import org.example.litefocus.core.model.CountdownTimer
 import kotlin.math.max
 
+private const val INITIAL_TIMER_VALUE_IN_MILLIS = 1_500_000L
+
 class CountdownTimerViewModel : ViewModel() {
 
     private val _countdownTimer: MutableStateFlow<CountdownTimer> = MutableStateFlow(
         CountdownTimer(
-            remainingTimeInMillis = 1_500_000L,
+            remainingTimeInMillis = INITIAL_TIMER_VALUE_IN_MILLIS,
             state = CountdownTimer.CountdownTimerState.INITIAL,
         )
     )
@@ -56,11 +58,30 @@ class CountdownTimerViewModel : ViewModel() {
         }
     }
 
-    fun stopTimer() {
+    fun pauseTimer() {
         viewModelScope.launch {
             _countdownTimer.update { it.copy(state = CountdownTimer.CountdownTimerState.PAUSED) }
         }
         _timerJob?.cancel()
         _timerJob = null
+    }
+
+    private fun stopTimer() {
+        viewModelScope.launch {
+            _countdownTimer.update { it.copy(state = CountdownTimer.CountdownTimerState.FINISHED) }
+        }
+        _timerJob?.cancel()
+        _timerJob = null
+    }
+
+    fun replayTimer() {
+        viewModelScope.launch {
+            _countdownTimer.update {
+                it.copy(
+                    remainingTimeInMillis = INITIAL_TIMER_VALUE_IN_MILLIS,
+                    state = CountdownTimer.CountdownTimerState.INITIAL,
+                )
+            }
+        }
     }
 }

@@ -3,6 +3,7 @@ package org.example.litefocus.feature.countdowntimer.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -15,13 +16,15 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -47,18 +50,50 @@ fun CountdownTimerScreen(
                 fontSize = 64.sp,
             )
             Spacer(modifier = Modifier.height(64.dp))
-            Button(
-                onClick = if (uiState.countdownTimer?.canBeStarted == true) viewModel::startTimer else viewModel::stopTimer,
-                contentPadding = PaddingValues(all = 32.dp),
-                shape = RoundedCornerShape(percent = 100),
-            ) {
-                Icon(
-                    imageVector = if (uiState.countdownTimer?.canBeStarted == true) Icons.Default.PlayArrow else Icons.Default.Close,
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                )
+            Row {
+                if (uiState.countdownTimer?.canBeStarted == true) {
+                    TimerButton(
+                        onClick = viewModel::startTimer,
+                        imageVector = Icons.Default.PlayArrow ,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                }
+                if (uiState.countdownTimer?.canBePaused == true) {
+                    TimerButton(
+                        onClick = viewModel::pauseTimer,
+                        imageVector = Icons.Default.Pause,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                }
+                if (uiState.countdownTimer?.canBeReplay == true) {
+                    TimerButton(
+                        onClick = viewModel::replayTimer,
+                        imageVector = Icons.Default.Replay,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun TimerButton(
+    onClick: () -> Unit,
+    imageVector: ImageVector,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        contentPadding = PaddingValues(all = 32.dp),
+        shape = RoundedCornerShape(percent = 100),
+    ) {
+        Icon(
+            imageVector = imageVector,
+            contentDescription = null,
+            modifier = Modifier.size(32.dp),
+        )
     }
 }
 

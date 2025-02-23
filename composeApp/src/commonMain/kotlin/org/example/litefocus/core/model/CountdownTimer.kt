@@ -13,4 +13,10 @@ data class CountdownTimer(
 
     val canBeStarted
         get() = setOf(CountdownTimerState.INITIAL, CountdownTimerState.PAUSED).contains(state)
+
+    val canBePaused
+        get() = state == CountdownTimerState.STARTED
+
+    val canBeReplay
+        get() = setOf(CountdownTimerState.PAUSED, CountdownTimerState.FINISHED).contains(state)
 }
