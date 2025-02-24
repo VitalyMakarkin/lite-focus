@@ -1,5 +1,9 @@
 package org.example.litefocus.feature.countdowntimer.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,12 +26,15 @@ import androidx.compose.material.icons.filled.Replay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.example.litefocus.feature.countdowntimer.presentation.CountdownTimerUiState
 import org.example.litefocus.feature.countdowntimer.presentation.CountdownTimerViewModel
 
 @Composable
@@ -36,41 +43,78 @@ fun CountdownTimerScreen(
     viewModel: CountdownTimerViewModel = viewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    Scaffold(modifier = modifier) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = uiState.countdownTimer?.remainingTimeInMillis?.let { convertToCountdownTime(it) } ?: "",
-                color = MaterialTheme.colors.primary,
-                fontSize = 64.sp,
-            )
-            Spacer(modifier = Modifier.height(64.dp))
-            Row {
-                if (uiState.countdownTimer?.canBeStarted == true) {
-                    TimerButton(
-                        onClick = viewModel::startTimer,
-                        imageVector = Icons.Default.PlayArrow ,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                }
-                if (uiState.countdownTimer?.canBePaused == true) {
-                    TimerButton(
-                        onClick = viewModel::pauseTimer,
-                        imageVector = Icons.Default.Pause,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                }
-                if (uiState.countdownTimer?.canBeReplay == true) {
-                    TimerButton(
-                        onClick = viewModel::replayTimer,
-                        imageVector = Icons.Default.Replay,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
+    CountdownTimerScreen(
+        uiState = uiState,
+        onStartTimerClick = viewModel::startTimer,
+        onPauseTimerClick = viewModel::pauseTimer,
+        onReplayTimerClick = viewModel::replayTimer,
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun CountdownTimerScreen(
+    uiState: CountdownTimerUiState,
+    onStartTimerClick: () -> Unit,
+    onPauseTimerClick: () -> Unit,
+    onReplayTimerClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (uiState.countdownTimer != null) {
+        val startTimerButtonVisibility by remember(uiState.countdownTimer.canBeStarted) { mutableStateOf(uiState.countdownTimer.canBeStarted) }
+        val pauseTimerButtonVisibility by remember(uiState.countdownTimer.canBePaused) { mutableStateOf(uiState.countdownTimer.canBePaused) }
+        val replayTimerButtonVisibility by remember(uiState.countdownTimer.canBeReplay) { mutableStateOf(uiState.countdownTimer.canBeReplay) }
+        Scaffold(modifier = modifier) { paddingValues ->
+            Column(
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = uiState.countdownTimer.remainingTimeInMillis.let { convertToCountdownTime(it) },
+                    color = MaterialTheme.colors.primary,
+                    fontSize = 64.sp,
+                )
+                Spacer(modifier = Modifier.height(64.dp))
+                Row(
+                    modifier = Modifier.animateContentSize(),
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    AnimatedVisibility(
+                        visible = startTimerButtonVisibility,
+                        enter = scaleIn(),
+                        exit = ExitTransition.None,
+                    ) {
+                        TimerButton(
+                            onClick = onStartTimerClick,
+                            imageVector = Icons.Default.PlayArrow,
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = replayTimerButtonVisibility,
+                        enter = scaleIn(),
+                        exit = ExitTransition.None,
+                    ) {
+                        TimerButton(
+                            onClick = onReplayTimerClick,
+                            imageVector = Icons.Default.Replay,
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                        )
+                    }
+                    AnimatedVisibility(
+                        visible = pauseTimerButtonVisibility,
+                        enter = scaleIn(),
+                        exit = ExitTransition.None,
+                    ) {
+                        TimerButton(
+                            onClick = onPauseTimerClick,
+                            imageVector = Icons.Default.Pause,
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                        )
+                    }
                 }
             }
         }
