@@ -16,7 +16,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
 //    listOf(
 //        iosX64(),
 //        iosArm64(),
@@ -29,13 +29,14 @@ kotlin {
 //    }
 //
 //    jvm("desktop")
-    
+
     sourceSets {
 //        val desktopMain by getting
-        
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.koin.android2)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -49,6 +50,9 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.androidx.lifecycle.viewmodel.compose)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewmodel)
         }
 //        desktopMain.dependencies {
 //            implementation(compose.desktop.currentOs)
@@ -66,7 +70,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "1.0"
+        versionName = "0.1"
     }
     packaging {
         resources {

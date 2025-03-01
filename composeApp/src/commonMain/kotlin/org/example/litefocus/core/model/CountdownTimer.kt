@@ -1,15 +1,10 @@
 package org.example.litefocus.core.model
 
 data class CountdownTimer(
-    val remainingTimeInMillis: Long,
-    val state: CountdownTimerState,
+    val remainingSeconds: Int = 0,
+    val state: CountdownTimerState = CountdownTimerState.INITIAL,
 ) {
-    enum class CountdownTimerState {
-        INITIAL,
-        STARTED,
-        PAUSED,
-        FINISHED,
-    }
+    enum class CountdownTimerState { INITIAL, STARTED, PAUSED, FINISHED }
 
     val canBeStarted
         get() = setOf(CountdownTimerState.INITIAL, CountdownTimerState.PAUSED).contains(state)

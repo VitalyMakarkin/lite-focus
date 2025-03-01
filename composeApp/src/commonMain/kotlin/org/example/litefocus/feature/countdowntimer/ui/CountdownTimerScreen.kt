@@ -33,21 +33,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import org.example.litefocus.feature.countdowntimer.presentation.CountdownTimerUiState
 import org.example.litefocus.feature.countdowntimer.presentation.CountdownTimerViewModel
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun CountdownTimerScreen(
     modifier: Modifier = Modifier,
-    viewModel: CountdownTimerViewModel = viewModel(),
+    viewModel: CountdownTimerViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     CountdownTimerScreen(
         uiState = uiState,
         onStartTimerClick = viewModel::startTimer,
         onPauseTimerClick = viewModel::pauseTimer,
-        onReplayTimerClick = viewModel::replayTimer,
+        onReplayTimerClick = viewModel::resetTimer,
         modifier = modifier,
     )
 }
@@ -73,7 +73,7 @@ private fun CountdownTimerScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = uiState.countdownTimer.remainingTimeInMillis.let { convertToCountdownTime(it) },
+                    text = uiState.countdownTimer.remainingSeconds.let { convertToCountdownTime(it) },
                     color = MaterialTheme.colors.primary,
                     fontSize = 64.sp,
                 )
@@ -141,7 +141,4 @@ private fun TimerButton(
     }
 }
 
-private fun convertToCountdownTime(millis: Long): String {
-    val seconds = millis / 1000L
-    return "%02d:%02d".format(seconds / 60, seconds % 60)
-}
+private fun convertToCountdownTime(seconds: Int) = "%02d:%02d".format(seconds / 60, seconds % 60)
