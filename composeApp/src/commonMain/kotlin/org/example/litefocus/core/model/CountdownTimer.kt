@@ -12,6 +12,6 @@ data class CountdownTimer(
     val canBePaused
         get() = state == CountdownTimerState.STARTED
 
-    val canBeReplay
+    val canBeReset
         get() = setOf(CountdownTimerState.PAUSED, CountdownTimerState.FINISHED).contains(state)
 }

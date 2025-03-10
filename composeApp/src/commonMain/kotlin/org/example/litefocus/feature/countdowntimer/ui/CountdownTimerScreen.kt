@@ -26,15 +26,16 @@ import androidx.compose.material.icons.filled.Replay
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.example.litefocus.feature.countdowntimer.presentation.CountdownTimerIntent
 import org.example.litefocus.feature.countdowntimer.presentation.CountdownTimerUiState
 import org.example.litefocus.feature.countdowntimer.presentation.CountdownTimerViewModel
+import org.example.litefocus.feature.countdowntimer.presentation.model.CountdownTimerUI
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -45,9 +46,9 @@ fun CountdownTimerScreen(
     val uiState by viewModel.uiState.collectAsState()
     CountdownTimerScreen(
         uiState = uiState,
-        onStartTimerClick = viewModel::startTimer,
-        onPauseTimerClick = viewModel::pauseTimer,
-        onReplayTimerClick = viewModel::resetTimer,
+        onStartTimerClick = { viewModel.sendIntent(CountdownTimerIntent.Start) },
+        onPauseTimerClick = { viewModel.sendIntent(CountdownTimerIntent.Pause) },
+        onResetTimerClick = { viewModel.sendIntent(CountdownTimerIntent.Reset) },
         modifier = modifier,
     )
 }
@@ -57,13 +58,10 @@ private fun CountdownTimerScreen(
     uiState: CountdownTimerUiState,
     onStartTimerClick: () -> Unit,
     onPauseTimerClick: () -> Unit,
-    onReplayTimerClick: () -> Unit,
+    onResetTimerClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    if (uiState.countdownTimer != null) {
-        val startTimerButtonVisibility by remember(uiState.countdownTimer.canBeStarted) { mutableStateOf(uiState.countdownTimer.canBeStarted) }
-        val pauseTimerButtonVisibility by remember(uiState.countdownTimer.canBePaused) { mutableStateOf(uiState.countdownTimer.canBePaused) }
-        val replayTimerButtonVisibility by remember(uiState.countdownTimer.canBeReplay) { mutableStateOf(uiState.countdownTimer.canBeReplay) }
+    uiState.countdownTimer?.let { timer ->
         Scaffold(modifier = modifier) { paddingValues ->
             Column(
                 modifier = Modifier
@@ -72,73 +70,92 @@ private fun CountdownTimerScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text = uiState.countdownTimer.remainingSeconds.let { convertToCountdownTime(it) },
-                    color = MaterialTheme.colors.primary,
-                    fontSize = 64.sp,
-                )
+                TimerText(remainingSeconds = timer.remainingSeconds)
                 Spacer(modifier = Modifier.height(64.dp))
-                Row(
-                    modifier = Modifier.animateContentSize(),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    AnimatedVisibility(
-                        visible = startTimerButtonVisibility,
-                        enter = scaleIn(),
-                        exit = ExitTransition.None,
-                    ) {
-                        TimerButton(
-                            onClick = onStartTimerClick,
-                            imageVector = Icons.Default.PlayArrow,
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                        )
-                    }
-                    AnimatedVisibility(
-                        visible = replayTimerButtonVisibility,
-                        enter = scaleIn(),
-                        exit = ExitTransition.None,
-                    ) {
-                        TimerButton(
-                            onClick = onReplayTimerClick,
-                            imageVector = Icons.Default.Replay,
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                        )
-                    }
-                    AnimatedVisibility(
-                        visible = pauseTimerButtonVisibility,
-                        enter = scaleIn(),
-                        exit = ExitTransition.None,
-                    ) {
-                        TimerButton(
-                            onClick = onPauseTimerClick,
-                            imageVector = Icons.Default.Pause,
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                        )
-                    }
-                }
+                TimerButtonGroup(
+                    timer = timer,
+                    onStart = onStartTimerClick,
+                    onPause = onPauseTimerClick,
+                    onReset = onResetTimerClick,
+                )
             }
         }
     }
 }
 
 @Composable
-private fun TimerButton(
-    onClick: () -> Unit,
-    imageVector: ImageVector,
+private fun TimerText(
+    remainingSeconds: Int,
     modifier: Modifier = Modifier,
 ) {
-    Button(
-        onClick = onClick,
+    val timeText = remember(remainingSeconds) {
+        convertToCountdownTime(remainingSeconds)
+    }
+    Text(
+        text = timeText,
         modifier = modifier,
-        contentPadding = PaddingValues(all = 32.dp),
-        shape = RoundedCornerShape(percent = 100),
+        color = MaterialTheme.colors.primary,
+        fontSize = 64.sp,
+    )
+}
+
+private fun convertToCountdownTime(seconds: Int) = "%02d:%02d".format(seconds / 60, seconds % 60)
+
+@Composable
+private fun TimerButtonGroup(
+    timer: CountdownTimerUI,
+    onStart: () -> Unit,
+    onPause: () -> Unit,
+    onReset: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .animateContentSize()
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Icon(
-            imageVector = imageVector,
-            contentDescription = null,
-            modifier = Modifier.size(32.dp),
+        TimerButton(
+            onClick = onStart,
+            imageVector = Icons.Default.PlayArrow,
+            visible = timer.canBeStarted,
+        )
+        TimerButton(
+            onClick = onPause,
+            imageVector = Icons.Default.Replay,
+            visible = timer.canBeReset,
+        )
+        TimerButton(
+            onClick = onReset,
+            imageVector = Icons.Default.Pause,
+            visible = timer.canBePaused,
         )
     }
 }
 
-private fun convertToCountdownTime(seconds: Int) = "%02d:%02d".format(seconds / 60, seconds % 60)
+@Composable
+private fun TimerButton(
+    onClick: () -> Unit,
+    visible: Boolean,
+    imageVector: ImageVector,
+    modifier: Modifier = Modifier,
+) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = scaleIn(),
+        exit = ExitTransition.None,
+    ) {
+        Button(
+            onClick = onClick,
+            modifier = modifier,
+            contentPadding = PaddingValues(all = 32.dp),
+            shape = RoundedCornerShape(percent = 100),
+        ) {
+            Icon(
+                imageVector = imageVector,
+                contentDescription = null,
+                modifier = Modifier.size(32.dp),
+            )
+        }
+    }
+}
